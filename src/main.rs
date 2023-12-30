@@ -3,13 +3,29 @@
 #![allow(incomplete_features)]
 #![recursion_limit="4294967295"]
 
-fn even_odd<T: Eval>(n: u32) {
-	if T::N == n {
-		if n % 2 == 0 {
-			println!("even")
-		} else {
-			println!("odd")
-		}
+fn even_odd<T: Eval + Print>(n: u32) {
+	match n {
+		_ if T::N == n => T::print(),
+		_ => (),
+	}
+}
+
+trait Print {
+	fn print();
+}
+
+impl<T: Eval> Print for T
+where
+	Cond<{ T::N % 2 == 0 }>: True,
+{
+	 fn print() {
+		println!("even")
+	}
+}
+
+impl<T> Print for T {
+	default fn print() {
+		println!("odd")
 	}
 }
 
@@ -56,7 +72,7 @@ impl<T: Eval> EvenOdd for T {
 	default fn even_odd(_: u32) {}
 }
 
-impl<T: Eval + LtU8Max> EvenOdd for T {
+impl<T: Eval + LtU8Max + Print> EvenOdd for T {
 	fn even_odd(n: u32) {
 		even_odd::<Self>(n);
 

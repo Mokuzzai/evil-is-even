@@ -3,57 +3,30 @@
 #![allow(incomplete_features)]
 #![recursion_limit="4294967295"]
 
-fn even_odd<T: Eval + Print>(n: u32) {
-	match n {
-		_ if T::N == n => T::print(),
-		_ => (),
-	}
-}
-
-trait Print {
-	fn print();
-}
-
-impl<T: Eval> Print for T
-where
-	Cond<{ T::N % 2 == 0 }>: True,
-{
-	 fn print() {
-		println!("even")
-	}
-}
-
-impl<T> Print for T {
-	default fn print() {
-		println!("odd")
-	}
-}
-
-struct One;
-
+struct Num<const N: u32>;
 struct Add<A, B>(A, B);
 
 trait Eval {
-	const N: u32;
+    const N: u32;
 }
 
-impl Eval for One {
-	const N: u32 = 1;
+impl<const N: u32> Eval for Num<N> {
+    const N: u32 = N;
 }
 
-impl<A, B> Eval for Add<A, B>
+impl<A, B> Eval for Add<A, B> 
 where
-	A: Eval,
-	B: Eval,
+    A: Eval,
+    B: Eval,
 {
-	const N: u32 = A::N + B::N;
+    const N: u32 = A::N + B::N;
 }
 
 trait EvenOdd {
-	fn even_odd(n: u32);
+    fn even_odd(n: u32);
 }
 
-trait LtU8Max {}
+const MAX: u32 = 1024;
 
 struct Cond<const B: bool>;
 
@@ -61,27 +34,51 @@ trait True {}
 
 impl True for Cond<true> {}
 
-const MAX: u32 = 2u32.pow(11);
+trait Even {}
 
-impl<T: Eval> LtU8Max for T
+impl<T> Even for T 
 where
-	Cond<{ T::N < MAX }>: True,
-	{}
+    T: Eval,
+    Cond<{ T::N % 2 == 0 }>: True,
+{}
 
-impl<T: Eval> EvenOdd for T {
-	default fn even_odd(_: u32) {}
+impl<T> EvenOdd for T
+where
+    T: Eval,
+{
+    default fn even_odd(n: u32) {}
 }
 
-impl<T: Eval + LtU8Max + Print> EvenOdd for T {
-	fn even_odd(n: u32) {
-		even_odd::<Self>(n);
+impl<T> EvenOdd for T
+where
+    T: Eval,
+    Cond<{ T::N < MAX }>: True,
+{
+    default fn even_odd(n: u32) {
+        match n {
+            _ if n == T::N => println!("odd"),
+            _ => Add::<Self, Num<1>>::even_odd(n), 
+        }
+    }
+}
 
-		Add::<Self, One>::even_odd(n);
-	}
+impl<T> EvenOdd for T
+where
+    T: Eval + Even,
+    Cond<{ T::N < MAX }>: True,
+{
+    fn even_odd(n: u32) {
+        match n {
+            _ if n == T::N => println!("even"),
+            _ => Add::<Self, Num<1>>::even_odd(n), 
+        }
+    }
+}
+
+pub fn even_odd(n: u32) {
+    Num::<0>::even_odd(n)
 }
 
 fn main() {
-	println!("MAX: {MAX}");
-
-	One::even_odd(12);
+    even_odd(7)
 }

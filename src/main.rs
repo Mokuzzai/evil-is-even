@@ -3,8 +3,8 @@
 #![allow(incomplete_features)]
 #![recursion_limit="4294967295"]
 
-struct Num<const N: u32>;
-struct Add<A, B>(A, B);
+enum Num<const N: u32> {}
+enum Add<const A: u32, const B: u32> {}
 
 trait Eval {
     const N: u32;
@@ -14,21 +14,17 @@ impl<const N: u32> Eval for Num<N> {
     const N: u32 = N;
 }
 
-impl<A, B> Eval for Add<A, B> 
-where
-    A: Eval,
-    B: Eval,
-{
-    const N: u32 = A::N + B::N;
+impl<const A: u32, const B: u32> Eval for Add<A, B> {
+    const N: u32 = A + B;
 }
 
 trait EvenOdd {
     fn even_odd(n: u32);
 }
 
-const MAX: u32 = 1024;
+const MAX: u32 = 2048;
 
-struct Cond<const B: bool>;
+enum Cond<const B: bool> {}
 
 trait True {}
 
@@ -57,7 +53,7 @@ where
     default fn even_odd(n: u32) {
         match n {
             _ if n == T::N => println!("odd"),
-            _ => Add::<Self, Num<1>>::even_odd(n), 
+            _ => Add::<{ Self::N }, 1>::even_odd(n), 
         }
     }
 }
@@ -70,12 +66,12 @@ where
     fn even_odd(n: u32) {
         match n {
             _ if n == T::N => println!("even"),
-            _ => Add::<Self, Num<1>>::even_odd(n), 
+            _ => Add::<{ Self::N }, 1>::even_odd(n), 
         }
     }
 }
 
-pub fn even_odd(n: u32) {
+fn even_odd(n: u32) {
     Num::<0>::even_odd(n)
 }
 
